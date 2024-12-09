@@ -8,8 +8,8 @@ pipeline {
         IMAGE_NAME = "sayalisawant12/mfusion-ms:mfusion-ms-v.1.${env.BUILD_NUMBER}"
         ECR_IMAGE_NAME = "${ECR_URL}/mfusion-ms:mfusion-ms-v.1.${env.BUILD_NUMBER}"
 
-        KUBECONFIG_ID = 'kubeconfig-fusion-k8s-cluster'
 
+        KUBECONFIG_ID = 'kubeconfig-fusion-k8s-cluster'
 
     }
 
