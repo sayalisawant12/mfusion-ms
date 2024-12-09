@@ -10,6 +10,7 @@ pipeline {
 
         KUBECONFIG_ID = 'kubeconfig-fusion-k8s-cluster'
 
+
     }
 
     options {
