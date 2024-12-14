@@ -5,10 +5,11 @@ pipeline {
         AWS_ACCOUNT_ID = "586794476819"
         REGION = "ap-south-1"
         ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
-        IMAGE_TAG = "mfusion-ms-v.1.${env.BUILD_NUMBER}"
+        IMAGE_TAG = "mfusion-ms-v.1.${env.BUILD_NUMBER ?: 'latest'}"
         IMAGE_NAME = "sayalisawant12/mfusion-ms:${IMAGE_TAG}"
         ECR_IMAGE_NAME = "${ECR_URL}/mfusion-ms:${IMAGE_TAG}"
         KUBECONFIG_ID = 'kubeconfig-fusion-k8s-cluster'
+        NAMESPACE = "dev"
     }
 
     tools {
@@ -17,7 +18,7 @@ pipeline {
 
     stages {
         stage('Build and Test') {
-            when { branch 'dev' }
+            when { expression { env.BRANCH_NAME == 'dev' } }
             steps {
                 echo 'Running Build and Test'
                 sh 'mvn clean test'
@@ -57,10 +58,10 @@ pipeline {
         }
 
         stage('Deploy to K8s') {
-            when { branch 'dev' }
+            when { expression { env.BRANCH_NAME == 'dev' } }
             steps {
                 script {
-                    deployToK8s('dev', 'kubernetes/dev/')
+                    deployToK8s(env.NAMESPACE, 'kubernetes/dev/')
                 }
             }
         }
@@ -75,8 +76,12 @@ pipeline {
 def deployToK8s(envName, yamlDir) {
     def yamlFiles = ['00-ingress.yaml', '02-service.yaml', '03-service-account.yaml', '05-deployment.yaml', '06-configmap.yaml', '09.hpa.yaml']
     yamlFiles.each { yamlFile ->
-        sh """
-            kubectl apply -f ${yamlDir}${yamlFile} -n ${envName}
-        """
+        try {
+            sh """
+                kubectl apply -f ${yamlDir}${yamlFile} -n ${envName}
+            """
+        } catch (Exception e) {
+            error "Failed to apply ${yamlFile}: ${e.message}"
+        }
     }
 }
